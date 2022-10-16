@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,14 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model DateData {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  month Int[]
+  year  Int
+}
+
+model DayStatis {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  date           String
+  nowValue       Int
+  /// Multiple data types found: Float: 85.7%, Int: 14.3% out of 42 sampled entries
+  reservePercent Float
+  supplydemand   Int
+  time           String
+}
+
 model ElecData {
   id        String @id @default(auto()) @map("_id") @db.ObjectId
   cntrKndNm String
-  salekwh   Int
+  cntrPwr   Int
+  custHocnt Int
+  salekwh   Int?
+  sidoNm    String
+  sigunguNm String
   useMm     String
   useYy     String
-  sidoNm    String
-  custHocnt Int
-  cntrPwr   Int
-  sigunguNm String
+}
+
+model ListData {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  cntrKndNmList String[]
+}
+
+model SidoData {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  sidoNm        String?
+  sigunguNmList String[]
 }

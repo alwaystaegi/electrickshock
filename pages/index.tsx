@@ -63,23 +63,23 @@ const Home: NextPage = () => {
       <div title="전력상태 박스" className="w-full border-2 border-black">
         {/* //!현재 전력상태 */}
         <div className="w-full text-center">현재 전력 상태</div>
-        <div className="flex w-[90vw] h-12 border-4 border-black mx-auto">
-          <div className="w-[16.6vw] bg-gradient-to-r from-gray-500 to-gray-900">
+        <div className="flex w-[1546px] h-12 border-4 border-black mx-auto">
+          <div className="w-[300px] bg-gradient-to-r from-gray-500 to-gray-900">
             1
           </div>
-          <div className="w-[16.6vw] bg-gradient-to-r from-green-500 to-green-900">
+          <div className="w-[300px] bg-gradient-to-r from-green-500 to-green-900">
             2
           </div>
-          <div className="w-[16.6vw] bg-gradient-to-r from-cyan-500 to-cyan-900">
+          <div className="w-[300px] bg-gradient-to-r from-cyan-500 to-cyan-900">
             3
           </div>
-          <div className="w-[16.6vw] bg-gradient-to-r from-yellow-500 to-yellow-900">
+          <div className="w-[300px] bg-gradient-to-r from-yellow-500 to-yellow-900">
             4
           </div>
-          <div className="w-[16.6vw] bg-gradient-to-r from-orange-500 to-orange-900">
+          <div className="w-[300px] bg-gradient-to-r from-orange-500 to-orange-900">
             5
           </div>
-          <div className="w-[16.6vw] bg-gradient-to-r from-red-500 to-red-900">
+          <div className="w-[300px] bg-gradient-to-r from-red-500 to-red-900">
             5
           </div>
         </div>
