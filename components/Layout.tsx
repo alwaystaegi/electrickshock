@@ -12,22 +12,22 @@ export default function Layout(props: LayoutProps) {
           className="relative flex w-full h-12 bg-black justify-between items-center text-white "
         >
           <Link href="/">
-            <div className="flex justify-center items-center w-[300px]">
+            <div className="flex justify-center items-center w-[300px] hover:cursor-pointer">
               홈으로
             </div>
           </Link>
           <Link href="/statistics">
-            <div className="flex justify-center items-center w-[300px]">
+            <div className="flex justify-center items-center w-[300px] hover:cursor-pointer">
               전력통계
             </div>
           </Link>
           <Link href="/self">
-            <div className="flex justify-center items-center w-[300px]">
+            <div className="flex justify-center items-center w-[300px] hover:cursor-pointer">
               자가진단
             </div>
           </Link>
           <Link href="/manager">
-            <div className="flex justify-center items-center w-[300px]">
+            <div className="flex justify-center items-center w-[300px] hover:cursor-pointer">
               관리자페이지
             </div>
           </Link>

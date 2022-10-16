@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,7 +10,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
-import { SidoData, ListData, DateData, ElecData } from "@prisma/client";
+import { SidoData, DateData, ElecData } from "@prisma/client";
 
 ChartJS.register(
   CategoryScale,
@@ -28,16 +28,18 @@ interface LayoutProps {
 
 export default function Particular({ select }: LayoutProps) {
   const [x, setX] = useState("월별");
-  const [purpose, setPurpose] = useState("전체");
+  const [purpose, setPurpose] = useState("전 체 ");
   const [region, setRegion] = useState("전국");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
-  const [graph, setGraph] = useState("선형");
   const [regionlist, setRegionlist] = useState<SidoData[]>([]);
   const [purposelist, setPurposelist] = useState<String[]>([]);
   const [datelist, setDatelist] = useState<String[]>([]);
   const [elecdata, setElecdata] = useState<ElecData[]>([]);
   const [labels, setLabels] = useState<String[]>([]);
+  const [supply, setSupply] = useState<number[]>([]);
+  const [sale, setSale] = useState<number[]>([]);
+  const [max, setMax] = useState(0);
   const options = {
     responsive: true,
     Plugin: {
@@ -49,6 +51,7 @@ export default function Particular({ select }: LayoutProps) {
         text: "gus",
       },
     },
+    scale: { y: { max } },
   };
 
   function getPurpose() {
@@ -87,8 +90,39 @@ export default function Particular({ select }: LayoutProps) {
   }
 
   function loadData() {
-    const data = { purpose, region, start, end };
-    fetch("/api/Elecdata/getData", {
+    let data;
+    let url;
+    setMax(0);
+    if (!start) {
+      alert("기간을 선택해주세요");
+    }
+    if (x === "월별") {
+      data = { purpose, region, start, end };
+      url = "/api/Elecdata/getDataM";
+      let [startYy, startMm] = start.split("-");
+      const [endYy, endMm] = end.split("-");
+      if (region === "전국") {
+        const yy = Number(endYy) - Number(startYy);
+        const mm = Number(endMm) - Number(startMm);
+        if (mm + yy * 12 > 3)
+          alert("지역이 전국일 경우 3개월 이하의 범위만 확인할 수 있습니다.");
+      }
+
+      if (!end) {
+        alert("기간을 선택해주세요");
+      }
+      if (startYy > endYy || (startYy == endYy && startMm > endMm)) {
+        alert("시작범위가 종료범위보다 작을 수 없습니다.");
+        return;
+      }
+    } else if (x == "용도별") {
+      data = { region, start };
+      url = "/api/Elecdata/getDataP";
+    } else {
+      data = { purpose, region, start };
+      url = "/api/Elecdata/getDataR";
+    }
+    fetch(url, {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -96,7 +130,6 @@ export default function Particular({ select }: LayoutProps) {
       .then(({ result }) => {
         setElecdata(result);
       });
-    console.log(elecdata);
     if (elecdata) {
       document.querySelector("#graph")?.classList.remove("invisible");
     }
@@ -108,10 +141,10 @@ export default function Particular({ select }: LayoutProps) {
         let label: String[] = [];
         let [startYy, startMm] = start.split("-");
         const [endYy, endMm] = end.split("-");
-        console.log(endYy);
-        console.log(startYy);
-        startYy.indexOf(endYy) === -1 ? console.log(1) : null;
-        while (startYy === endYy && Number(startMm) === Number(endMm)) {
+        while (
+          Number(startYy) * 12 + Number(startMm) <
+          Number(endYy) * 12 + Number(endMm) + 1
+        ) {
           label = [...label, `${startYy}-${startMm}`];
           startMm = (Number(startMm) + 1).toString();
           if (startMm === "13") {
@@ -122,6 +155,14 @@ export default function Particular({ select }: LayoutProps) {
 
         return label;
       });
+
+      elecdata
+        ? elecdata.forEach((ele) => {
+            setSale((prev) => [...prev, ele.salekwh]);
+            setSupply((prev) => [...prev, ele.cntrPwr]);
+            if (ele.cntrPwr > max) setMax(ele.cntrPwr);
+          })
+        : null;
     } else if (x === "용도별") {
       setLabels([
         "가로등",
@@ -133,6 +174,24 @@ export default function Particular({ select }: LayoutProps) {
         "전 체 ",
         "주택용",
       ]);
+      setSale([0, 0, 0, 0, 0, 0, 0, 0]);
+      setSupply([0, 0, 0, 0, 0, 0, 0, 0]);
+
+      elecdata.forEach((ele) => {
+        labels.forEach((elel, idx) => {
+          if (elel === ele.cntrKndNm) {
+            setSale((sale) => {
+              sale[idx] = sale[idx] + ele.salekwh;
+              return sale;
+            });
+            setSupply((supply) => {
+              supply[idx] = supply[idx] + ele.cntrPwr;
+              return supply;
+            });
+            if (ele.cntrPwr > max) setMax(ele.cntrPwr);
+          }
+        });
+      });
     } else {
       setLabels(() => {
         let label: String[] = [];
@@ -145,7 +204,35 @@ export default function Particular({ select }: LayoutProps) {
 
         return label;
       });
+      setSale([]);
+      setSupply([]);
+      for (let i = 0; i < labels.length; i++) {
+        setSale((prev) => {
+          prev.push(0);
+          return prev;
+        });
+        setSupply((prev) => {
+          prev.push(0);
+          return prev;
+        });
+      }
+      elecdata.forEach((ele) => {
+        labels.forEach((elel, idx) => {
+          if (elel === ele.sidoNm || elel === ele.sigunguNm) {
+            setSale((sale) => {
+              sale[idx] = sale[idx] + ele.salekwh;
+              return sale;
+            });
+            setSupply((supply) => {
+              supply[idx] = supply[idx] + ele.cntrPwr;
+              return supply;
+            });
+            if (ele.cntrPwr > max) setMax(ele.cntrPwr);
+          }
+        });
+      });
     }
+    console.log(max);
   }
   useEffect(() => {
     getPurpose();
@@ -153,84 +240,28 @@ export default function Particular({ select }: LayoutProps) {
     getDate();
   }, [select]);
   function show() {
-    if ("선형" === graph) {
-      return (
-        <Line
-          datasetIdKey="id"
-          data={{
-            labels,
-            datasets: [
-              {
-                label: "공급능력",
-                data: [1, 2, 3, 4, 5, 6],
-                borderColor: "rgb(255, 99, 132)",
-                backgroundColor: "rgba(255, 99, 132, 0.5)",
-              },
-              {
-                label: "부하량",
-                data: [1, 2, 3, 4, 5],
-                borderColor: "rgb(53, 162, 235)",
-                backgroundColor: "rgba(53, 162, 235, 0.5)",
-              },
-            ],
-          }}
-        />
-      );
-    } else if ("막대형" === graph) {
-      return (
-        <Bar
-          options={options}
-          datasetIdKey="id"
-          data={{
-            labels,
-            datasets: [
-              {
-                label: "공급능력",
-                data: [1, 2, 3, 4, 5, 6],
-                backgroundColor: "rgba(255, 99, 132, 0.5)",
-              },
-              {
-                label: "부하량",
-                data: [1, 2, 3, 4, 5],
-                backgroundColor: "rgba(53, 162, 235, 0.5)",
-              },
-            ],
-          }}
-        />
-      );
-    } else {
-      return (
-        <Doughnut
-          datasetIdKey="id"
-          data={{
-            labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-            datasets: [
-              {
-                label: "# of Votes",
-                data: [12, 19, 3, 5, 2, 3],
-                backgroundColor: [
-                  "rgba(255, 99, 132, 0.2)",
-                  "rgba(54, 162, 235, 0.2)",
-                  "rgba(255, 206, 86, 0.2)",
-                  "rgba(75, 192, 192, 0.2)",
-                  "rgba(153, 102, 255, 0.2)",
-                  "rgba(255, 159, 64, 0.2)",
-                ],
-                borderColor: [
-                  "rgba(255, 99, 132, 1)",
-                  "rgba(54, 162, 235, 1)",
-                  "rgba(255, 206, 86, 1)",
-                  "rgba(75, 192, 192, 1)",
-                  "rgba(153, 102, 255, 1)",
-                  "rgba(255, 159, 64, 1)",
-                ],
-                borderWidth: 1,
-              },
-            ],
-          }}
-        />
-      );
-    }
+    return (
+      <Line
+        datasetIdKey="id"
+        data={{
+          labels,
+          datasets: [
+            {
+              label: "공급능력",
+              data: supply,
+              borderColor: "rgb(255, 99, 132)",
+              backgroundColor: "rgba(255, 99, 132, 0.5)",
+            },
+            {
+              label: "부하량",
+              data: sale,
+              borderColor: "rgb(53, 162, 235)",
+              backgroundColor: "rgba(53, 162, 235, 0.5)",
+            },
+          ],
+        }}
+      />
+    );
   }
 
   function search() {
@@ -320,9 +351,9 @@ export default function Particular({ select }: LayoutProps) {
               className="mx-2 ring-2 ring-black "
               onChange={(event) => {
                 setStart(event.currentTarget.value);
-                console.log(start);
               }}
             >
+              <option hidden>시작범위</option>
               {datelist.map((ele, idx) => {
                 return <option key={idx}>{ele}</option>;
               })}
@@ -339,6 +370,7 @@ export default function Particular({ select }: LayoutProps) {
                 setEnd(event.currentTarget.value);
               }}
             >
+              <option hidden>종료범위</option>
               {datelist.map((ele, idx) => {
                 return <option key={idx}>{ele}</option>;
               })}
@@ -390,7 +422,7 @@ export default function Particular({ select }: LayoutProps) {
 
           {/* //!탐색 월 */}
           <div className="flex h-10">
-            <div>탐색연월</div>
+            <div>탐색년월</div>
             <select
               title="시작"
               className="mx-2 ring-2 ring-black "
@@ -398,6 +430,7 @@ export default function Particular({ select }: LayoutProps) {
                 setStart(event.currentTarget.value);
               }}
             >
+              <option hidden>기간선택</option>
               {datelist.map((ele, idx) => {
                 return <option key={idx}>{ele}</option>;
               })}
@@ -485,6 +518,7 @@ export default function Particular({ select }: LayoutProps) {
                 setStart(event.currentTarget.value);
               }}
             >
+              <option hidden>기간입력</option>
               {datelist.map((ele, idx) => {
                 return <option key={idx}>{ele}</option>;
               })}
@@ -508,6 +542,10 @@ export default function Particular({ select }: LayoutProps) {
               className="mx-2 ring-2 ring-black"
               onChange={(event) => {
                 setX(event.currentTarget.value);
+                setPurpose("전 체 ");
+                setRegion("전국");
+                setStart("");
+                setEnd("");
               }}
             >
               <option value={"월별"}>월별</option>
@@ -519,25 +557,6 @@ export default function Particular({ select }: LayoutProps) {
           <button className="bg-slate-400 rounded-md h-10" onClick={loadData}>
             검색하기
           </button>
-          {/* //!그래프옵션 */}
-          <div className="flex h-10">
-            <div>표현방식</div>
-            <select
-              title="그래프"
-              className="mx-2 ring-2 ring-black "
-              onChange={(event) => {
-                setGraph(event.currentTarget.value);
-              }}
-            >
-              <option defaultChecked value="선형">
-                선형
-              </option>
-              <option value="막대형">막대형</option>
-              <option value="도넛형" className="text-red-500">
-                도넛형
-              </option>
-            </select>
-          </div>
         </div>
       </div>
 

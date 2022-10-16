@@ -28,7 +28,7 @@ model ElecData {
   cntrKndNm String
   cntrPwr   Int
   custHocnt Int
-  salekwh   Int?
+  salekwh   Int
   sidoNm    String
   sigunguNm String
   useMm     String
