@@ -55,12 +55,18 @@ export default function Particular({ select }: LayoutProps) {
   };
 
   function getPurpose() {
-    fetch("/api/Elecdata/listData")
-      .then((res) => res.json())
-      .then(({ result }) => {
-        setPurposelist(result[0].cntrKndNmList);
-      });
+    setPurposelist([
+      "가로등",
+      "교육용",
+      "농사용",
+      "산업용",
+      "심 야 ",
+      "일반용",
+      "전 체 ",
+      "주택용",
+    ]);
   }
+
   function getRegion() {
     setRegionlist([]);
     fetch("/api/Elecdata/regionData")
