@@ -2,11 +2,11 @@ import { useState } from "react";
 import Layout from "../components/Layout";
 import Graph from "../components/Graph";
 
-export default function statistics() {
+export default function Status() {
   const [select, setSelect] = useState("상세전력통계");
 
   function clickselect(value?: string) {
-    setSelect(value ? value : "");
+    setSelect(value ? value : " a");
   }
 
   return (

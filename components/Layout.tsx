@@ -16,7 +16,7 @@ export default function Layout(props: LayoutProps) {
               홈으로
             </div>
           </Link>
-          <Link href="/statistics">
+          <Link href="/Status">
             <div className="flex justify-center items-center w-[300px] hover:cursor-pointer">
               전력통계
             </div>
